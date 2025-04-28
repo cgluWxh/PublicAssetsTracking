@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <title>感谢信</title>
+    <meta name="viewport" content="maximum-scale=1,minimum-scale=1,user-scalable=0,width=device-width,initial-scale=1" /> 
+    <meta name="format-detection" content="telephone=no,email=no,date=no,address=no" /> 
+    <link rel="stylesheet" href="/static/styles/mdui.min.css"/>
+    <link rel="stylesheet" href="/static/styles/toastr.min.css"/>
+    <link rel="icon" href="logo.png" type="image/png" />
+    <script src="/static/scripts/polyfill.min.js"></script>
+    <script src="/static/scripts/jq.js"></script>
+    <script src="/static/scripts/mdui.min.js"></script>
+    <script src="/static/scripts/toastr.min.js"></script>
+    <style type="text/css">.mdui-select{width: 100%;}.text-center{text-align:center;}</style>
+    <script>
+    toastr.options = {  
+            closeButton: false,
+            debug: false,
+            progressBar: true,
+            onclick: null,
+            showDuration: "300",
+            hideDuration: "1000",
+            timeOut: "1500",
+            extendedTimeOut: "1000",
+            showEasing: "swing",
+            hideEasing: "linear",
+            showMethod: "fadeIn",
+            hideMethod: "fadeOut"
+        }; 
+    </script>
+    <style>body{position:relative;}.nav li img{margin:-4px 12px 0 0}textarea{resize:vertical}h5{color:#1e8ccf;text-decoration:underline;cursor:Pointer}#tk{resize:none}#topSpan{display:none}#content{border:0;overflow:auto}img{width:1em}.textarea1 .icon img{margin-bottom:-10px;width:1em}.icon img{width:1.2em}.box{margin:70px 15px 0}.box img{width:20px}.box textarea{margin:5px 0}.textFrame{border:2px solid #ececec;padding:10px;border-radius:10px;margin-bottom:15px;height:10em}.weui_toast{position:fixed;z-index:3;width:7.6em;min-height:7.6em;top:180px;left:50%;margin-left:-3.8em;background:rgba(40,40,40,.75);text-align:center;border-radius:5px;color:#fff}.shutDown{cursor:pointer;color:#bababa;color:#3cd084;font-size:14px}.shutDown2{color:#bababa}</style>
+</head>
+<body class="mdui-appbar-with-toolbar mdui-theme-primary-light-blue mdui-theme-accent-light-blue"> 
+    <div id="app">
+
+        <div class="mdui-appbar mdui-appbar-fixed">
+            <div class="mdui-toolbar mdui-color-light-blue">
+                <a href="javascript:;" class="mdui-typo-title mdui-text-color-white">{{"{{"}}lhgx?"设备借还":"感谢信"{{"}}"}}</a>
+            </div>
+        </div>
+
+        <div class="mdui-container">
+            <div class="mdui-card" style="margin-top: 20px;" v-if="!lhgx">
+                <div class="mdui-card-primary">
+                    <div class="mdui-card-primary-title">感谢信</div>
+                </div>
+                <div class="mdui-card-content">
+                    <p>如有拾到本设备，还请归还。感激不尽</p>
+                    <p style="text-align: right;" v-on:click="toLH()">一个署名</p>
+                    
+                </div>
+            </div>
+            <div class="mdui-card" style="margin-top: 20px;" v-if="lhgx">
+                <div class="mdui-card-primary">
+                    <div class="mdui-card-primary-title">设备借还</div>
+                </div>
+                <div class="mdui-card-content">
+                    <p>您将要操作的设备如下列表，请确认后继续操作。</p><br />
+                    <button class="mdui-btn mdui-btn-raised mdui-ripple" v-on:click="scanQr()">扫码添加设备</button><br />
+                    <div id="reader"></div>
+                    <div class="mdui-table-fluid">
+                        <table class="mdui-table mdui-table-hoverable" id="deviceList">
+                          <thead>
+                            <tr>
+                              <th>#</th>
+                              <th>名称</th>
+                              <th>设备ID</th>
+                              <th>所有者</th>
+                              <th>当前位置</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {%raw%}
+                                <tr v-for="item,i in deviceList">
+                                    <td>{{i+1}}</td>
+                                    <td>{{item.name}}</td>
+                                    <td>{{item.id}}</td>
+                                    <td>{{item.owner}}</td>
+                                    <td>{{item.position}}</td>
+                                </tr>
+                            {%endraw%}
+                          </tbody>
+                        </table>
+                    </div>
+                    <div class="mdui-textfield mdui-textfield-floating-label">
+                      <label class="mdui-textfield-label">操作者名称</label>
+                      <input class="mdui-textfield-input" id="op" type="text"/>
+                    </div>
+                    <select class="mdui-select" mdui-select id="type">
+                      <option value="get">出库/转借</option>
+                      <option value="back">入库</option>
+                    </select>
+                    <button class="mdui-btn mdui-btn-raised mdui-ripple" style="width:100%;" v-on:click="submit()">提交操作</button>
+                </div>
+            </div>
+            
+        </div>
+
+        <script src="/static/scripts/vue.js"></script>
+        <script src="/static/scripts/store.js"></script>
+        <script src="/static/scripts/main.js"></script>
+        <script src="/static/scripts/html5-qrcode.min.js"></script>
+
+        <script>
+            function b64e(str) {
+                return btoa(encodeURIComponent(str));
+            }
+            function b64d(str) {
+                return decodeURIComponent(atob(str));
+            }
+            function isJSON(str) {
+                if (typeof str == 'string') {
+                    try {
+                        var obj=JSON.parse(str);
+                        if(typeof obj == 'object' && obj ){
+                            return true;
+                        }else{
+                            return false;
+                        }
+            
+                    } catch(e) {
+                        return false;
+                    }
+                }
+                else return false;
+            }
+            function htmlEncode(str){ 
+                var s = "";
+                if(str.length == 0) return "";
+                s = str.replace(/&/g,"&amp;");
+                s = s.replace(/</g,"&lt;");
+                s = s.replace(/>/g,"&gt;");
+                s = s.replace(/ /g,"&nbsp;");
+                s = s.replace(/\'/g,"'");
+                s = s.replace(/\"/g,"\"");
+                s = s.replace(/\n/g,"<br />");
+                return s; 
+            }
+            var app = new Vue({
+                el: '#app',
+                data: {
+                    deviceList:[],
+                    addedDevice:[],
+                    lhgx:false
+                },
+                methods: {
+                    async getdata(id) {
+                        const res=await fetch(`/api/get/statById/${id}`);
+                        const res2=await res.json();
+                        return res2;
+                    },
+                    async addDeviceToList(id) {
+                        this.addedDevice.push(id)
+                        this.deviceList.push(await this.getdata(id));
+                    },
+                    scanQr() {
+                        $("#reader").show();
+                        function onScanSuccess(decodedText, decodedResult) {
+                            app.html5QrcodeScanner.html5Qrcode.pause();
+                            const reg=/https?:\/\/.+\/(\d+)/;
+                            const t2=decodedText.match(reg);
+                            if(t2) {
+                                t3=parseInt(t2[1]);
+                                $("#reader").hide();
+                                if(!(t3 in app.addedDevice))app.addDeviceToList(t3);
+                            } else {
+                                alert("当前二维码非法！");
+                            }
+                        }
+
+                        function onScanFailure(error) {
+                            // handle scan failure, usually better to ignore and keep scanning.
+                            // for example:
+                        }
+                        const config={ fps: 10, qrbox: {width: 250, height: 250} };
+                        if(!this.html5QrcodeScanner) {
+                            this.html5QrcodeScanner = new Html5QrcodeScanner(
+                            "reader",
+                            config, false);
+                            this.html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+                            this.html5QrcodeScanner.html5Qrcode.start({ facingMode: "environment" },config,onScanSuccess);
+                        }
+                        app.html5QrcodeScanner.resume();
+                        
+                    },
+                    toLH() {
+                        localStorage.dtlh=true;
+                        app.addDeviceToList({{deviceID}});
+                        app.lhgx=true;
+                        document.title="设备借还";
+                    },
+                    submit() {
+                        const data=JSON.stringify({
+                            op:$("#op").val(),
+                            type:$("#type").val(),
+                            device:this.addedDevice
+                        });
+                        let myHeaders = new Headers();
+                        myHeaders.append('Content-Type', 'application/json');
+                        let request = new Request('/api/do/doInOut/', {
+                               method: 'POST', 
+                               mode: 'no-cors',
+                               body:JSON.stringify(data),
+                               headers:myHeaders
+                        });
+                        fetch(request)
+                           .then(response => response.json())
+                           .then(result =>{
+                               if(result.code!=0)alert(result.msg);
+                               else {
+                                   alert("操作成功，请记住：设备无价，谨慎使用！");
+                               }
+                           })
+                    }
+                }
+            });
+            $(function(){
+                if(localStorage.dtlh)app.toLH();
+            })
+        </script>
+    </body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <title>设备状态</title>
+    <meta name="viewport" content="maximum-scale=1,minimum-scale=1,user-scalable=0,width=device-width,initial-scale=1" /> 
+    <meta name="format-detection" content="telephone=no,email=no,date=no,address=no" /> 
+    <link rel="stylesheet" href="/static/styles/mdui.min.css"/>
+    <link rel="stylesheet" href="/static/styles/toastr.min.css"/>
+    <link rel="icon" href="logo.png" type="image/png" />
+    <script src="/static/scripts/polyfill.min.js"></script>
+    <script src="/static/scripts/jq.js"></script>
+    <script src="/static/scripts/mdui.min.js"></script>
+    <script src="/static/scripts/toastr.min.js"></script>
+    <style type="text/css">.mdui-select{width: 100%;}.text-center{text-align:center;}</style>
+    <script>
+    toastr.options = {  
+            closeButton: false,
+            debug: false,
+            progressBar: true,
+            onclick: null,
+            showDuration: "300",
+            hideDuration: "1000",
+            timeOut: "1500",
+            extendedTimeOut: "1000",
+            showEasing: "swing",
+            hideEasing: "linear",
+            showMethod: "fadeIn",
+            hideMethod: "fadeOut"
+        }; 
+    </script>
+    <style>body{position:relative;}.nav li img{margin:-4px 12px 0 0}textarea{resize:vertical}h5{color:#1e8ccf;text-decoration:underline;cursor:Pointer}#tk{resize:none}#topSpan{display:none}#content{border:0;overflow:auto}img{width:1em}.textarea1 .icon img{margin-bottom:-10px;width:1em}.icon img{width:1.2em}.box{margin:70px 15px 0}.box img{width:20px}.box textarea{margin:5px 0}.textFrame{border:2px solid #ececec;padding:10px;border-radius:10px;margin-bottom:15px;height:10em}.weui_toast{position:fixed;z-index:3;width:7.6em;min-height:7.6em;top:180px;left:50%;margin-left:-3.8em;background:rgba(40,40,40,.75);text-align:center;border-radius:5px;color:#fff}.shutDown{cursor:pointer;color:#bababa;color:#3cd084;font-size:14px}.shutDown2{color:#bababa}</style>
+</head>
+<body class="mdui-appbar-with-toolbar mdui-theme-primary-light-blue mdui-theme-accent-light-blue"> 
+    <div id="app">
+
+        <div class="mdui-appbar mdui-appbar-fixed">
+            <div class="mdui-toolbar mdui-color-light-blue">
+                <a href="javascript:;" class="mdui-typo-title mdui-text-color-white">设备状态</a>
+            </div>
+        </div>
+
+        <div class="mdui-container">
+            <div class="mdui-card" style="margin-top: 20px;">
+                <div class="mdui-card-primary">
+                    <div class="mdui-card-primary-title">设备状态</div>
+                </div>
+                <div class="mdui-card-content">
+                    <div class="mdui-table-fluid">
+                        <table class="mdui-table mdui-table-hoverable" id="deviceList">
+                          <thead>
+                            <tr>
+                              <th>#</th>
+                              <th>名称</th>
+                              <th>状态</th>
+                              <th>设备ID</th>
+                              <th>所有者</th>
+                              <th>当前位置</th>
+                              <th>操作</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {%raw%}
+                                <tr v-for="item,i in deviceList">
+                                    <td>{{i+1}}</td>
+                                    <td>{{item.name}}</td>
+                                    <td>{{item.stat==1?"可用":"不可用"}}</td>
+                                    <td>{{item.id}}</td>
+                                    <td>{{item.owner}}</td>
+                                    <td>{{item.position}}</td>
+                                    <td><span v-on:click="viewStat(item.id)">看记录</span> <span v-on:click="lent(item.id)">借还</span></td>
+                                </tr>
+                            {%endraw%}
+                          </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+
+        <script src="/static/scripts/vue.js"></script>
+        <script src="/static/scripts/store.js"></script>
+        <script src="/static/scripts/main.js"></script>
+
+        <script>
+            var app = new Vue({
+                el: '#app',
+                data: {
+                    deviceList:[]
+                },
+                methods: {
+                    async init() {
+                        const res=await fetch(`/api/get/allDevice`);
+                        const res2=await res.json();
+                        function cmp(a,b) {return b.stat-a.stat};
+                        this.deviceList=res2.sort(cmp);
+                    },
+                    viewStat(id) {
+                        window.location.pathname=`/stat/${id}`;
+                    },
+                    lent(id) {
+                        window.location.pathname=`/do/${id}`;
+                    }
+                }
+            });
+            $(function(){app.init();});
+        </script>
+    </body>
+</html>

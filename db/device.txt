@@ -1,0 +1,17 @@
+[
+    {
+        "id": 0,
+        "name": "SONY A7M4",
+        "owner": "Entity1",
+        "stat": 1,
+        "position": "Room1"
+    },
+    {
+        "id": 1,
+        "name": "DJI Mavic Air 2",
+        "owner": "Entity2",
+        "type": "Drone",
+        "stat": 0,
+        "position": "Entity1"
+    }
+]
